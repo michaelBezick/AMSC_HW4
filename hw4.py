@@ -73,7 +73,7 @@ if question_2:
     dx = log_eps_values[1:] - log_eps_values[:-1]
     slopes = dy / dx
     best_slope = np.argmax(slopes)
-    best_log_eps = log_eps_values[best_slope]
+    best_log_eps = (log_eps_values[best_slope] + log_eps_values[best_slope + 1]) / 2
     best_eps = np.exp(best_log_eps)
 
     plt.figure()
@@ -100,6 +100,15 @@ if question_2:
     plt.title("MAE versus Epsilon")
     plt.plot(epsilon_grid, errors)
     plt.axvline(x=best_eps, color="red", label=rf"$\epsilon^*={best_eps:.3g}$")
+
+
+    errors = np.asarray(errors)
+    if np.isfinite(errors).any():
+        i_min = np.argmin(np.where(np.isfinite(errors), errors, np.inf))
+        error_minimizer = epsilon_grid[i_min]
+        plt.axvline(x=error_minimizer, color="green",
+                    label=rf"MAE minimum at $\epsilon={error_minimizer:.3g}$")
+
     plt.xscale("log")
     plt.xlabel("Epsilon")
     plt.ylabel("MAE")
@@ -116,10 +125,12 @@ if question_2:
 if question_3:
 
     k_list = [2 ** p for p in range(5,10)]
-    
-    for k in k_list:
 
-        def get_K_epsilon(k, eps_par, xy):
+    
+    for i, k in enumerate(k_list):
+        print(f"Iteration {i}/{len(k_list)}. Processing k: {k}")
+
+        def get_K_epsilon_knn(k, eps_par, xy):
             N = xy.shape[0]
             e0 = np.ones((N,))
 
@@ -141,7 +152,7 @@ if question_3:
 
         S_values = np.array(
             [
-                float(get_K_epsilon(k, eps, pts).sum()) / pts.shape[0] ** 2
+                float(get_K_epsilon_knn(k, eps, pts).sum()) / pts.shape[0] ** 2
                 for eps in epsilon_grid
             ]
         )
@@ -154,7 +165,7 @@ if question_3:
         dx = log_eps_values[1:] - log_eps_values[:-1]
         slopes = dy / dx
         best_slope = np.argmax(slopes)
-        best_log_eps = log_eps_values[best_slope]
+        best_log_eps = (log_eps_values[best_slope] + log_eps_values[best_slope + 1]) / 2
         best_eps = np.exp(best_log_eps)
 
         plt.figure()
@@ -168,7 +179,7 @@ if question_3:
 
         print(f"Best eps: {best_eps}")
 
-        epsilon_grid = np.logspace(-5, -1, 20).tolist()
+        epsilon_grid = np.logspace(-3, -1, 20).tolist()
 
         errors = []
 
@@ -180,7 +191,7 @@ if question_3:
 
 
         plt.figure()
-        plt.title("MAE versus Epsilon")
+        plt.title(f"MAE versus Epsilon, k={k}")
         plt.plot(epsilon_grid, errors)
         plt.axvline(x=best_eps, color="red", label=rf"k sum $\epsilon^*={best_eps:.3g}$")
 
@@ -205,5 +216,3 @@ if question_3:
         print(f"Ksum predicted epsilon: {best_eps:.6g}")
         print(f"Smallest observed MAE: {errors[i_min]:.6g}")
         print(f"Epsilon at smallest MAE: {epsilon_grid[i_min]:.6g}")
-
-        exit()
