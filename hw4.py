@@ -14,7 +14,11 @@ question_1 = True
 question_2 = True
 question_3 = True
 
-epsilon_grid = np.logspace(-3,0, 20)
+epsilon_grid = np.logspace(-3, -1, 20)
+
+best_MAE_dnn = None
+best_MAE_knn = None
+
 
 if question_1:
     # epsilon_grid = np.logspace(-4, 0, 30).tolist()
@@ -31,11 +35,17 @@ if question_1:
     print(epsilon_grid)
     plt.figure()
     plt.title("MAE versus Epsilon")
-    plt.plot(epsilon_grid, errors)
+    plt.plot(epsilon_grid, errors, marker='o')
     plt.xscale("log")
     plt.xlabel("Epsilon")
     plt.ylabel("MAE")
     plt.savefig("mae_vs_epsilon.pdf")
+
+    errors = np.asarray(errors)
+    if np.isfinite(errors).any():
+        i_min = np.argmin(np.where(np.isfinite(errors), errors, np.inf))
+        best_MAE_dnn = errors[i_min]
+        best_epsilon_dn = epsilon_grid[i_min]
 
 if question_2:
     # form K_\epsilon
@@ -75,11 +85,11 @@ if question_2:
     dx = log_eps_values[1:] - log_eps_values[:-1]
     slopes = dy / dx
     best_slope = np.argmax(slopes)
-    best_log_eps = (log_eps_values[best_slope] + log_eps_values[best_slope + 1]) / 2
+    best_log_eps = log_eps_values[best_slope]
     best_eps = np.exp(best_log_eps)
 
     plt.figure()
-    plt.plot(log_eps_values, log_S_values, marker='o')
+    plt.plot(log_eps_values, log_S_values, marker="o")
     plt.axvline(x=best_log_eps, color="red", label=rf"$\epsilon^*={best_eps:.3g}$")
     plt.ylabel("log S(eps)")
     plt.xlabel("log eps")
@@ -100,16 +110,18 @@ if question_2:
 
     plt.figure()
     plt.title("MAE versus Epsilon")
-    plt.plot(epsilon_grid, errors, marker='o')
+    plt.plot(epsilon_grid, errors, marker="o")
     plt.axvline(x=best_eps, color="red", label=rf"$\epsilon^*={best_eps:.3g}$")
-
 
     errors = np.asarray(errors)
     if np.isfinite(errors).any():
         i_min = np.argmin(np.where(np.isfinite(errors), errors, np.inf))
         error_minimizer = epsilon_grid[i_min]
-        plt.axvline(x=error_minimizer, color="green",
-                    label=rf"MAE minimum at $\epsilon={error_minimizer:.3g}$")
+        plt.axvline(
+            x=error_minimizer,
+            color="green",
+            label=rf"MAE minimum at $\epsilon={error_minimizer:.3g}$",
+        )
 
     plt.xscale("log")
     plt.xlabel("Epsilon")
@@ -123,12 +135,12 @@ if question_2:
     print(f"Ksum predicted epsilon: {best_eps:.6g}")
     print(f"Smallest observed MAE: {errors[i_min]:.6g}")
     print(f"Epsilon at smallest MAE: {epsilon_grid[i_min]:.6g}")
+    print(f"MAE at Ksum epsilon: {errors[best_slope]}")
 
 if question_3:
 
-    k_list = [2 ** p for p in range(5,10)]
+    k_list = [2**p for p in range(5, 10)]
 
-    
     for i, k in enumerate(k_list):
         print(f"Iteration {i}/{len(k_list)}. Processing k: {k}")
 
@@ -146,6 +158,7 @@ if question_3:
                 K[j, neighbors] = np.exp(-d2[neighbors] / eps_par)
 
             # Convert to CSR format for efficient arithmetic operations
+            K = (K + K.T) * 0.5
             K = K.tocsr()
 
             return K
@@ -167,11 +180,11 @@ if question_3:
         dx = log_eps_values[1:] - log_eps_values[:-1]
         slopes = dy / dx
         best_slope = np.argmax(slopes)
-        best_log_eps = (log_eps_values[best_slope] + log_eps_values[best_slope + 1]) / 2
+        best_log_eps = log_eps_values[best_slope]
         best_eps = np.exp(best_log_eps)
 
         plt.figure()
-        plt.plot(log_eps_values, log_S_values, marker='o')
+        plt.plot(log_eps_values, log_S_values, marker="o")
         plt.axvline(x=best_log_eps, color="red", label=rf"$\epsilon^*={best_eps:.3g}$")
         plt.ylabel("log S(eps)")
         plt.xlabel("log eps")
@@ -191,20 +204,22 @@ if question_3:
             mean_abs_error = np.mean(abs_error)
             errors.append(mean_abs_error)
 
-
         plt.figure()
         plt.title(f"MAE versus Epsilon, k={k}")
-        plt.plot(epsilon_grid, errors, marker='o')
-        plt.axvline(x=best_eps, color="red", label=rf"k sum $\epsilon^*={best_eps:.3g}$")
-
+        plt.plot(epsilon_grid, errors, marker="o")
+        plt.axvline(
+            x=best_eps, color="red", label=rf"k sum $\epsilon^*={best_eps:.3g}$"
+        )
 
         errors = np.asarray(errors)
         if np.isfinite(errors).any():
             i_min = np.argmin(np.where(np.isfinite(errors), errors, np.inf))
             error_minimizer = epsilon_grid[i_min]
-            plt.axvline(x=error_minimizer, color="green",
-                        label=rf"MAE minimum at $\epsilon={error_minimizer:.3g}$")
-
+            plt.axvline(
+                x=error_minimizer,
+                color="green",
+                label=rf"MAE minimum at $\epsilon={error_minimizer:.3g}$",
+            )
 
         plt.xscale("log")
         plt.xlabel("Epsilon")
@@ -218,3 +233,15 @@ if question_3:
         print(f"Ksum predicted epsilon: {best_eps:.6g}")
         print(f"Smallest observed MAE: {errors[i_min]:.6g}")
         print(f"Epsilon at smallest MAE: {epsilon_grid[i_min]:.6g}")
+
+
+        mae_at_best_epsilon = errors[i_min]
+        if best_MAE_knn is None or mae_at_best_epsilon < best_MAE_knn:
+            best_MAE_knn = mae_at_best_epsilon
+            best_k = k
+            best_epsilon_knn = epsilon_grid[i_min]
+
+
+print("Which is better?")
+print(f"DNN MAE: {best_MAE_dnn}")
+print(f"KNN MAE: {best_MAE_knn}")

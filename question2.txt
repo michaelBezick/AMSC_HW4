@@ -1,3 +1,0 @@
-Ksum predicted epsilon: 0.00695193
-Smallest observed MAE: 0.00124159
-Epsilon at smallest MAE: 0.00335982
