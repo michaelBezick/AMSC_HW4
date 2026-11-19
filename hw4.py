@@ -10,12 +10,14 @@ dd = np.load("./FEM_pts_comm.npz")
 pts = dd["pts"]  # FEM mesh points
 q = dd["comm"]  # committor values at them
 
-question_1 = False
-question_2 = False
+question_1 = True
+question_2 = True
 question_3 = True
 
+epsilon_grid = np.logspace(-3,0, 20)
+
 if question_1:
-    epsilon_grid = np.logspace(-4, 0, 30).tolist()
+    # epsilon_grid = np.logspace(-4, 0, 30).tolist()
 
     errors = []
 
@@ -56,7 +58,7 @@ if question_2:
 
         return K
 
-    epsilon_grid = np.logspace(-4, 3, 20).tolist()
+    # epsilon_grid = np.logspace(-3, 1, 20).tolist()
 
     S_values = np.array(
         [
@@ -77,7 +79,7 @@ if question_2:
     best_eps = np.exp(best_log_eps)
 
     plt.figure()
-    plt.plot(log_eps_values, log_S_values)
+    plt.plot(log_eps_values, log_S_values, marker='o')
     plt.axvline(x=best_log_eps, color="red", label=rf"$\epsilon^*={best_eps:.3g}$")
     plt.ylabel("log S(eps)")
     plt.xlabel("log eps")
@@ -86,7 +88,7 @@ if question_2:
 
     print(f"Best eps: {best_eps}")
 
-    epsilon_grid = np.logspace(-5, 3, 20).tolist()
+    # epsilon_grid = np.logspace(-3, 1, 20).tolist()
 
     errors = []
 
@@ -98,7 +100,7 @@ if question_2:
 
     plt.figure()
     plt.title("MAE versus Epsilon")
-    plt.plot(epsilon_grid, errors)
+    plt.plot(epsilon_grid, errors, marker='o')
     plt.axvline(x=best_eps, color="red", label=rf"$\epsilon^*={best_eps:.3g}$")
 
 
@@ -148,7 +150,7 @@ if question_3:
 
             return K
 
-        epsilon_grid = np.logspace(-4, 3, 20).tolist()
+        # epsilon_grid = np.logspace(-3, 1, 20).tolist()
 
         S_values = np.array(
             [
@@ -169,7 +171,7 @@ if question_3:
         best_eps = np.exp(best_log_eps)
 
         plt.figure()
-        plt.plot(log_eps_values, log_S_values)
+        plt.plot(log_eps_values, log_S_values, marker='o')
         plt.axvline(x=best_log_eps, color="red", label=rf"$\epsilon^*={best_eps:.3g}$")
         plt.ylabel("log S(eps)")
         plt.xlabel("log eps")
@@ -179,7 +181,7 @@ if question_3:
 
         print(f"Best eps: {best_eps}")
 
-        epsilon_grid = np.logspace(-3, -1, 20).tolist()
+        # epsilon_grid = np.logspace(-3, -1, 20).tolist()
 
         errors = []
 
@@ -192,7 +194,7 @@ if question_3:
 
         plt.figure()
         plt.title(f"MAE versus Epsilon, k={k}")
-        plt.plot(epsilon_grid, errors)
+        plt.plot(epsilon_grid, errors, marker='o')
         plt.axvline(x=best_eps, color="red", label=rf"k sum $\epsilon^*={best_eps:.3g}$")
 
 
